@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum OrderStatus {
+  PLACED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id              Int              @id @default(autoincrement())
+  email           String           @unique
+  password        String
+  name            String
+  role            Role             @default(CUSTOMER)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  providerProfile ProviderProfile?
+  orders          Order[]
+  reviews         Review[]
+}
+
+model ProviderProfile {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id])
+  companyName String
+  description String?
+  address     String?
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  meals       Meal[]
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  meals       Meal[]
+}
+
+model Meal {
+  id                Int             @id @default(autoincrement())
+  name              String
+  description       String
+  price             Float
+  imageUrl          String?
+  categoryId        Int
+  category          Category        @relation(fields: [categoryId], references: [id])
+  providerProfileId Int
+  providerProfile   ProviderProfile @relation(fields: [providerProfileId], references: [id])
+  isAvailable       Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  orderItems        OrderItem[]
+  reviews           Review[]
+}
+
+model Order {
+  id                Int             @id @default(autoincrement())
+  userId            Int
+  user              User            @relation(fields: [userId], references: [id])
+  status            OrderStatus     @default(PLACED)
+  deliveryAddress   String
+  totalAmount       Float
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  orderItems        OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  mealId    Int
+  meal      Meal     @relation(fields: [mealId], references: [id])
+  quantity  Int
+  price     Float
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  mealId    Int
+  meal      Meal     @relation(fields: [mealId], references: [id])
+  rating    Int      @default(5)
+  comment   String?
+  createdAt DateTime @default(now())
+}
