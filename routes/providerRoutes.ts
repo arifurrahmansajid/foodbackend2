@@ -1,0 +1,19 @@
+import express from 'express';
+import * as providerController from '../controllers/providerController';
+import { protect, restrictTo } from '../middleware/auth';
+import { Role } from '@prisma/client';
+
+const router = express.Router();
+
+router.use(protect);
+router.use(restrictTo(Role.PROVIDER));
+
+// Manage Meals
+router.post('/meals', providerController.addMeal);
+router.put('/meals/:id', providerController.updateMeal);
+router.delete('/meals/:id', providerController.deleteMeal);
+
+// Manage Orders
+router.patch('/orders/:id', providerController.updateOrderStatus);
+
+export default router;
