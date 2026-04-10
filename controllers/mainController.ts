@@ -11,10 +11,18 @@ export const getAllMeals = catchAsync(async (req: Request, res: Response, next: 
     include: {
       category: true,
       provider: true,
+      reviews: { select: { rating: true } }
     },
   });
 
-  res.status(200).json({ status: 'success', data: { meals } });
+  const mealsWithRating = meals.map(meal => {
+    const total = meal.reviews.reduce((acc, r) => acc + r.rating, 0);
+    const avg = meal.reviews.length > 0 ? total / meal.reviews.length : 0;
+    // Remove reviews array from response to keep it clean if desired, or keep it
+    return { ...meal, avgRating: parseFloat(avg.toFixed(1)) };
+  });
+
+  res.status(200).json({ status: 'success', data: { meals: mealsWithRating } });
 });
 
 // Public Providers
@@ -42,7 +50,7 @@ export const getProvider = catchAsync(async (req: Request, res: Response, next: 
     include: {
       meals: {
         where: { isActive: true },
-        include: { category: true }
+        include: { category: true, reviews: { select: { rating: true } } }
       }
     },
   });
@@ -53,7 +61,7 @@ export const getProvider = catchAsync(async (req: Request, res: Response, next: 
       include: {
         meals: {
           where: { isActive: true },
-          include: { category: true }
+          include: { category: true, reviews: { select: { rating: true } } }
         }
       },
     });
@@ -61,7 +69,13 @@ export const getProvider = catchAsync(async (req: Request, res: Response, next: 
 
   if (!provider) return next(new AppError('No provider profile found for this request', 404));
 
-  res.status(200).json({ status: 'success', data: { provider } });
+  const mealsWithRating = provider.meals.map(meal => {
+    const total = meal.reviews.reduce((acc, r) => acc + r.rating, 0);
+    const avg = meal.reviews.length > 0 ? total / meal.reviews.length : 0;
+    return { ...meal, avgRating: parseFloat(avg.toFixed(1)) };
+  });
+
+  res.status(200).json({ status: 'success', data: { provider: { ...provider, meals: mealsWithRating } } });
 });
 
 export const getMeal = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -77,7 +91,10 @@ export const getMeal = catchAsync(async (req: Request, res: Response, next: Next
 
   if (!meal) return next(new AppError('No meal found with that ID', 404));
 
-  res.status(200).json({ status: 'success', data: { meal } });
+  const total = meal.reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+  const avgRating = meal.reviews.length > 0 ? parseFloat((total / meal.reviews.length).toFixed(1)) : 0;
+
+  res.status(200).json({ status: 'success', data: { meal: { ...meal, avgRating } } });
 });
 
 // Orders
@@ -182,6 +199,7 @@ export const getAdminStats = catchAsync(async (req: Request, res: Response, next
 // Category Management
 export const getAllCategories = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const categories = await prisma.category.findMany({
+    orderBy: { name: 'asc' },
     include: { _count: { select: { meals: true } } }
   });
   res.status(200).json({ status: 'success', data: { categories } });
