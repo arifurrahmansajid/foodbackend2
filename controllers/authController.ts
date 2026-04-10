@@ -27,26 +27,13 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
 
   const hashedPassword = await bcrypt.hash(password as string, 12);
 
-  const newUser = await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
-      data: {
-        email: email as string,
-        password: hashedPassword,
-        name: name as string,
-        role: (role as Role) || Role.CUSTOMER,
-      },
-    });
-
-    if (role === Role.PROVIDER) {
-      await tx.providerProfile.create({
-        data: {
-          userId: user.id,
-          name: user.name,
-        },
-      });
-    }
-
-    return user;
+  const newUser = await prisma.user.create({
+    data: {
+      email: email as string,
+      password: hashedPassword,
+      name: name as string,
+      role: (role as Role) || Role.CUSTOMER,
+    },
   });
 
   const token = signToken(newUser.id, newUser.role as Role);

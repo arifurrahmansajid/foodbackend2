@@ -35,20 +35,24 @@ model User {
   updatedAt       DateTime         @updatedAt
   
   // Relations
-  providerProfile ProviderProfile?
+  providerProfiles ProviderProfile[]
   orders          Order[]
   reviews         Review[]
 }
 
 model ProviderProfile {
   id          String   @id @default(uuid())
-  userId      String   @unique
+  userId      String
   user        User     @relation(fields: [userId], references: [id])
   name        String
   description String?
-  image       String?
-  rating      Float    @default(0.0)
-  createdAt   DateTime @default(now())
+  image        String?
+  rating       Float    @default(0.0)
+  phone        String?
+  contactEmail String?
+  website      String?
+  address      String?
+  createdAt    DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
@@ -73,8 +77,8 @@ model Meal {
   price       Float
   image       String?
   isActive    Boolean  @default(true)
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
   providerId  String
   provider    ProviderProfile @relation(fields: [providerId], references: [id])
   createdAt   DateTime @default(now())

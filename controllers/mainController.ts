@@ -48,7 +48,7 @@ export const getProvider = catchAsync(async (req: Request, res: Response, next: 
   });
 
   if (!provider) {
-    provider = await prisma.providerProfile.findUnique({
+    provider = await prisma.providerProfile.findFirst({
       where: { userId: providerIdOrUserId },
       include: {
         meals: {
@@ -224,4 +224,49 @@ export const getAdminProviders = catchAsync(async (req: Request, res: Response, 
     include: { user: { select: { name: true, email: true, isActive: true } }, _count: { select: { meals: true } } }
   });
   res.status(200).json({ status: 'success', data: { providers } });
+});
+
+// Reviews
+export const getAllReviews = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const reviews = await prisma.review.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+    include: {
+      user: { select: { name: true } },
+      meal: { select: { name: true, image: true } },
+    },
+  });
+  res.status(200).json({ status: 'success', data: { reviews } });
+});
+
+export const createReview = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const mealId = req.params.id as string;
+  const { rating, comment } = req.body;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return next(new AppError('Rating must be between 1 and 5', 400));
+  }
+
+  const meal = await prisma.meal.findUnique({ where: { id: mealId } });
+  if (!meal) return next(new AppError('Meal not found', 404));
+
+  // Prevent duplicate reviews from same user
+  const existing = await prisma.review.findFirst({
+    where: { mealId, userId: req.user.id },
+  });
+  if (existing) {
+    return next(new AppError('You have already reviewed this meal', 400));
+  }
+
+  const review = await prisma.review.create({
+    data: {
+      rating: Number(rating),
+      comment: comment as string | undefined,
+      userId: req.user.id,
+      mealId,
+    },
+    include: { user: { select: { name: true } } },
+  });
+
+  res.status(201).json({ status: 'success', data: { review } });
 });

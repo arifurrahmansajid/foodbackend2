@@ -8,6 +8,10 @@ const router = express.Router();
 router.use(protect);
 router.use(restrictTo(Role.PROVIDER));
 
+// Manage Profiles
+router.get('/profiles', providerController.getMyProfiles);
+router.post('/profiles', providerController.createProfile);
+
 // Manage Meals
 router.post('/meals', providerController.addMeal);
 router.put('/meals/:id', providerController.updateMeal);

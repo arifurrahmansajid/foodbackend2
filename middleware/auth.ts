@@ -35,7 +35,7 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
 
     const currentUser = await prisma.user.findUnique({
       where: { id: decoded.id },
-      include: { providerProfile: true }
+      include: { providerProfiles: true }
     });
 
     if (!currentUser) {

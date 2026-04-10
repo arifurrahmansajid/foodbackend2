@@ -13,9 +13,16 @@ router.get('/meals/:id', mainController.getMeal);
 router.get('/providers', mainController.getAllProviders);
 router.get('/providers/:id', mainController.getProvider);
 
-// Protected Orders
+// Public Categories
+router.get('/categories', mainController.getAllCategories);
+
+// Public Reviews
+router.get('/reviews', mainController.getAllReviews);
+
+// Protected Orders + Reviews
 router.use(protect);
 
+router.post('/meals/:id/reviews', restrictTo(Role.CUSTOMER), mainController.createReview);
 router.post('/orders', restrictTo(Role.CUSTOMER), mainController.createOrder);
 
 export default router;
