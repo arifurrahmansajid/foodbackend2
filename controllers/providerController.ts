@@ -111,3 +111,54 @@ export const updateOrderStatus = catchAsync(async (req: Request, res: Response, 
 
   res.status(200).json({ status: 'success', data: { order } });
 });
+
+export const getProviderOrders = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  // 1. Get all provider profiles owned by this user
+  const profiles = await prisma.providerProfile.findMany({
+    where: { userId: req.user.id },
+    select: { id: true }
+  });
+  
+  const providerIds = profiles.map(p => p.id);
+  
+  if (providerIds.length === 0) {
+    return res.status(200).json({ status: 'success', data: { orders: [] } });
+  }
+
+  // 2. Fetch orders where ANY of the items belong to this provider's meals
+  const orders = await prisma.order.findMany({
+    where: {
+      items: {
+        some: {
+          meal: {
+            providerId: { in: providerIds }
+          }
+        }
+      }
+    },
+    include: {
+      items: {
+        include: {
+          meal: {
+            select: { image: true, providerId: true }
+          }
+        }
+      },
+      user: {
+        select: { name: true, email: true }
+      }
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // 3. Optional: Filter order items to only show the ones belonging to *this* provider
+  // If an order contains items from multiple providers, the seller should only see their own items.
+  const filteredOrders = orders.map(order => {
+    return {
+      ...order,
+      items: order.items.filter(item => providerIds.includes(item.meal.providerId))
+    };
+  });
+
+  res.status(200).json({ status: 'success', data: { orders: filteredOrders } });
+});

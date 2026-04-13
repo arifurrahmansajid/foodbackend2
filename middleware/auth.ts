@@ -42,7 +42,7 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
       console.log('[AUTH] User not found for ID:', decoded.id);
       return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
-    
+
     if (!currentUser.isActive) {
       console.log('[AUTH] User account deactivated:', currentUser.email);
       return next(new AppError('This user account has been deactivated.', 403));

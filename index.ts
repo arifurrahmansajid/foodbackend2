@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import mainRoutes from './routes/mainRoutes';
 import providerRoutes from './routes/providerRoutes';
 import adminRoutes from './routes/adminRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 import helmet from 'helmet';
@@ -46,6 +47,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', mainRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

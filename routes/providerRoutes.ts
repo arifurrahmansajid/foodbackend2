@@ -18,6 +18,7 @@ router.put('/meals/:id', providerController.updateMeal);
 router.delete('/meals/:id', providerController.deleteMeal);
 
 // Manage Orders
+router.get('/orders', providerController.getProviderOrders);
 router.patch('/orders/:id', providerController.updateOrderStatus);
 
 export default router;

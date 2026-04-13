@@ -24,5 +24,7 @@ router.use(protect);
 
 router.post('/meals/:id/reviews', restrictTo(Role.CUSTOMER), mainController.createReview);
 router.post('/orders', restrictTo(Role.CUSTOMER), mainController.createOrder);
+router.get('/orders', mainController.getUserOrders);
+router.get('/orders/:id', mainController.getOrder);
 
 export default router;

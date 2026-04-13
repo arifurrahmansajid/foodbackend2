@@ -43,7 +43,7 @@ export const getAllProviders = catchAsync(async (req: Request, res: Response, ne
 
 export const getProvider = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const providerIdOrUserId = req.params.id as string;
-  
+
   // Try to find by Profile ID first, then by User ID
   let provider = await prisma.providerProfile.findUnique({
     where: { id: providerIdOrUserId },
@@ -112,13 +112,13 @@ export const createOrder = catchAsync(async (req: Request, res: Response, next: 
     for (const item of items) {
       const mealId = item.mealId as string;
       const quantity = item.quantity as number;
-      
+
       const meal = await tx.meal.findUnique({ where: { id: mealId } });
       if (!meal) throw new AppError(`Meal ${mealId} not found`, 404);
-      
+
       const itemTotal = meal.price * quantity;
       total += itemTotal;
-      
+
       orderItemsData.push({
         mealId: meal.id,
         name: meal.name,
@@ -144,6 +144,43 @@ export const createOrder = catchAsync(async (req: Request, res: Response, next: 
 
   res.status(201).json({ status: 'success', data: { order: newOrder } });
 });
+
+export const getUserOrders = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const orders = await prisma.order.findMany({
+    where: { userId: req.user.id },
+    include: {
+      items: {
+        include: {
+          meal: {
+            select: { image: true }
+          }
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  res.status(200).json({ status: 'success', data: { orders } });
+});
+
+export const getOrder = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const order = await prisma.order.findUnique({
+    where: { id: req.params.id as string },
+    include: {
+      items: true,
+      user: { select: { name: true, email: true } },
+    },
+  });
+
+  if (!order) return next(new AppError('No order found with that ID', 404));
+  
+  if (order.userId !== req.user.id && req.user.role !== Role.ADMIN) {
+    return next(new AppError('You do not have permission to view this order', 403));
+  }
+
+  res.status(200).json({ status: 'success', data: { order } });
+});
+
 
 // Admin Features
 export const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
