@@ -60,3 +60,4 @@ app.use(errorHandler);
 app.listen(port, () => {
   console.log(`[FoodHub API] Serving at http://localhost:${port}`);
 });
+// Trigger restart

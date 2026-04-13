@@ -26,5 +26,6 @@ router.post('/meals/:id/reviews', restrictTo(Role.CUSTOMER), mainController.crea
 router.post('/orders', restrictTo(Role.CUSTOMER), mainController.createOrder);
 router.get('/orders', mainController.getUserOrders);
 router.get('/orders/:id', mainController.getOrder);
+router.patch('/orders/:id/cancel', restrictTo(Role.CUSTOMER), mainController.cancelOrder);
 
 export default router;

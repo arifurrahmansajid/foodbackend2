@@ -25,13 +25,14 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
   }
 
   if (!token) {
-    console.log('[AUTH] No token found in headers');
+    console.log('[AUTH DEBUG] No token provided in headers');
     return next(new AppError('You are not logged in! Please log in to get access.', 401));
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as JwtPayload;
-    console.log('[AUTH] Token verified for user ID:', decoded.id);
+    const secret = process.env.JWT_SECRET || 'secret';
+    const decoded = jwt.verify(token, secret) as JwtPayload;
+    console.log('[AUTH DEBUG] Token successfully decoded for ID:', decoded.id);
 
     const currentUser = await prisma.user.findUnique({
       where: { id: decoded.id },
@@ -39,20 +40,23 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
     });
 
     if (!currentUser) {
-      console.log('[AUTH] User not found for ID:', decoded.id);
+      console.log('[AUTH DEBUG] User not found in database for ID:', decoded.id);
       return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
 
     if (!currentUser.isActive) {
-      console.log('[AUTH] User account deactivated:', currentUser.email);
+      console.log('[AUTH DEBUG] User account is inactive:', currentUser.email);
       return next(new AppError('This user account has been deactivated.', 403));
     }
 
     req.user = currentUser;
-    console.log('[AUTH] Access granted for:', currentUser.email, 'Role:', currentUser.role);
+    console.log('[AUTH DEBUG] Authentication successful for:', currentUser.email);
     next();
   } catch (error: any) {
-    console.log('[AUTH] Token verification failed:', error.message);
+    console.error('[AUTH DEBUG] Token verification failed:', error.message);
+    if (error.name === 'TokenExpiredError') {
+       return next(new AppError('Your session has expired. Please login again.', 401));
+    }
     return next(new AppError('Invalid token. Please log in again.', 401));
   }
 });

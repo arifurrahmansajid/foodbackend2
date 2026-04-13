@@ -181,6 +181,28 @@ export const getOrder = catchAsync(async (req: Request, res: Response, next: Nex
   res.status(200).json({ status: 'success', data: { order } });
 });
 
+export const cancelOrder = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const orderId = req.params.id as string;
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+
+  if (!order) return next(new AppError('No order found with that ID', 404));
+  if (order.userId !== req.user.id) {
+    return next(new AppError('You do not have permission to cancel this order', 403));
+  }
+  
+  // Only allow cancellation if order is in PLACED state
+  if (order.status !== OrderStatus.PLACED) {
+    return next(new AppError(`Order cannot be cancelled because it is already ${order.status.toLowerCase()}`, 400));
+  }
+
+  const updatedOrder = await prisma.order.update({
+    where: { id: orderId },
+    data: { status: OrderStatus.CANCELLED }
+  });
+
+  res.status(200).json({ status: 'success', data: { order: updatedOrder } });
+});
+
 
 // Admin Features
 export const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {

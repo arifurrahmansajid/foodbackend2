@@ -93,3 +93,28 @@ export const getMe = catchAsync(async (req: Request, res: Response, next: NextFu
     },
   });
 });
+
+export const updateProfile = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { name, email, avatar } = req.body;
+  const user = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { 
+      name: name as string | undefined, 
+      email: email as string | undefined, 
+      avatar: avatar as string | undefined 
+    },
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar
+      },
+    },
+  });
+});
