@@ -12,7 +12,8 @@ import helmet from 'helmet';
 
 dotenv.config();
 
-const app = express();
+export const app = express();
+
 const port = process.env.PORT || 5000;
 
 // Middleware
@@ -60,7 +61,10 @@ app.get('/health', (req, res) => {
 // Error handling
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`[FoodHub API] Serving at http://localhost:${port}`);
-});
-// Trigger restart
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`[FoodHub API] Serving at http://localhost:${port}`);
+  });
+}
+
+export default app;
