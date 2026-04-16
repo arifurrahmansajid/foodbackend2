@@ -24,11 +24,24 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https://images.unsplash.com", "*"],
-      connectSrc: ["'self'", "http://localhost:5000", "ws://localhost:3000"]
+      connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:3000", "ws://localhost:3000"]
     }
   }
 }));
-app.use(cors());
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // Routes
