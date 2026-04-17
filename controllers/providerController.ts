@@ -44,11 +44,16 @@ export const addMeal = catchAsync(async (req: Request, res: Response, next: Next
   });
   if (!provider) return next(new AppError('Provider profile not found or unauthorized', 403));
 
+  const parsedPrice = typeof price === 'string' ? parseFloat(price) : (price as number);
+  if (isNaN(parsedPrice)) {
+    return next(new AppError('Invalid price format. Please provide a valid number.', 400));
+  }
+
   const meal = await prisma.meal.create({
     data: {
       name: name as string,
       description: description as string,
-      price: typeof price === 'string' ? parseFloat(price) : (price as number),
+      price: parsedPrice,
       image: image as string,
       categoryId: categoryId ? (categoryId as string) : undefined,
       providerId: providerId as string,
@@ -68,12 +73,20 @@ export const updateMeal = catchAsync(async (req: Request, res: Response, next: N
     return next(new AppError('Unauthorized update attempt', 403));
   }
 
+  let parsedPrice = undefined;
+  if (price !== undefined) {
+    parsedPrice = typeof price === 'string' ? parseFloat(price) : (price as number);
+    if (isNaN(parsedPrice)) {
+      return next(new AppError('Invalid price format. Please provide a valid number.', 400));
+    }
+  }
+
   const meal = await prisma.meal.update({
     where: { id: mealId },
     data: {
       name: name as string,
       description: description as string,
-      price: price ? (typeof price === 'string' ? parseFloat(price) : (price as number)) : undefined,
+      price: parsedPrice,
       image: image as string,
       categoryId: categoryId as string,
       isActive: isActive as boolean,
