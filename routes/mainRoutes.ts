@@ -23,9 +23,9 @@ router.get('/reviews', mainController.getAllReviews);
 router.use(protect);
 
 router.post('/meals/:id/reviews', restrictTo(Role.CUSTOMER), mainController.createReview);
-router.post('/orders', restrictTo(Role.CUSTOMER), mainController.createOrder);
+router.post('/orders', mainController.createOrder); // Anyone authenticated can order
 router.get('/orders', mainController.getUserOrders);
 router.get('/orders/:id', mainController.getOrder);
-router.patch('/orders/:id/cancel', restrictTo(Role.CUSTOMER), mainController.cancelOrder);
+router.patch('/orders/:id/cancel', mainController.cancelOrder);
 
 export default router;

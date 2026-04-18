@@ -8,14 +8,23 @@ const prisma = new PrismaClient();
 export const getMyProfiles = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const profiles = await prisma.providerProfile.findMany({
     where: { userId: req.user.id },
-    include: { meals: true }
+    include: { 
+      meals: {
+        include: {
+          reviews: {
+            include: { user: { select: { name: true, avatar: true } } },
+            orderBy: { createdAt: 'desc' }
+          }
+        }
+      } 
+    }
   });
   res.status(200).json({ status: 'success', data: { profiles } });
 });
 
 export const createProfile = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { name, description, image, phone, contactEmail, website, address } = req.body;
-  
+
   const profile = await prisma.providerProfile.create({
     data: {
       userId: req.user.id,
@@ -131,9 +140,9 @@ export const getProviderOrders = catchAsync(async (req: Request, res: Response, 
     where: { userId: req.user.id },
     select: { id: true }
   });
-  
+
   const providerIds = profiles.map(p => p.id);
-  
+
   if (providerIds.length === 0) {
     return res.status(200).json({ status: 'success', data: { orders: [] } });
   }

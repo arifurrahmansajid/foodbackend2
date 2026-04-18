@@ -26,7 +26,7 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
 
   if (!token) {
     console.log('[AUTH DEBUG] No token provided in headers');
-    return next(new AppError('You are not logged in! Please log in to get access.', 401));
+    return next(new AppError(`No authentication token found in request headers. Header: ${req.headers.authorization ? 'present(malformed)' : 'missing'}`, 401));
   }
 
   try {
@@ -41,7 +41,7 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
 
     if (!currentUser) {
       console.log('[AUTH DEBUG] User not found in database for ID:', decoded.id);
-      return next(new AppError('The user belonging to this token no longer exists.', 401));
+      return next(new AppError(`User not found for ID: ${decoded.id}. Please re-login.`, 401));
     }
 
     if (!currentUser.isActive) {
@@ -55,9 +55,12 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
   } catch (error: any) {
     console.error('[AUTH DEBUG] Token verification failed:', error.message);
     if (error.name === 'TokenExpiredError') {
-       return next(new AppError('Your session has expired. Please login again.', 401));
+       return next(new AppError('Your session has expired (TokenExpired). Please login again.', 401));
     }
-    return next(new AppError('Invalid token. Please log in again.', 401));
+    if (error.name === 'JsonWebTokenError') {
+        return next(new AppError(`Invalid token structure (${error.message}). Please login again.`, 401));
+    }
+    return next(new AppError(`Authentication Error: ${error.message}`, 401));
   }
 });
 

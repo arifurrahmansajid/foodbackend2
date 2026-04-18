@@ -127,10 +127,15 @@ export const createOrder = catchAsync(async (req: Request, res: Response, next: 
       });
     }
 
-    const order = await tx.order.create({
+    const adminCommission = total * 0.02;
+    const sellerEarnings = total * 0.98;
+
+    const order = await (tx.order as any).create({
       data: {
         userId: req.user.id,
         total,
+        sellerEarnings,
+        adminCommission,
         address: address as string,
         items: {
           create: orderItemsData,
@@ -236,9 +241,33 @@ export const getAdminStats = catchAsync(async (req: Request, res: Response, next
     })
   ]);
 
-  const totalRevenue = await prisma.order.aggregate({
-    _sum: { total: true }
-  });
+  const [revenueStats, cancelledOrders, reviewStats, reviews] = await Promise.all([
+    (prisma.order as any).aggregate({
+      where: { status: { not: OrderStatus.CANCELLED } },
+      _sum: { total: true, sellerEarnings: true, adminCommission: true }
+    }),
+    prisma.order.findMany({
+      where: { status: OrderStatus.CANCELLED },
+      orderBy: { updatedAt: 'desc' },
+      include: { 
+        user: { select: { name: true, email: true } },
+        items: true
+      }
+    }),
+    prisma.review.aggregate({
+      _avg: { rating: true }
+    }),
+    prisma.review.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      include: {
+        user: { select: { name: true, avatar: true } },
+        meal: { select: { name: true } }
+      }
+    })
+  ]);
+
+  const statsObj = revenueStats?._sum || {};
 
   res.status(200).json({
     status: 'success',
@@ -248,9 +277,14 @@ export const getAdminStats = catchAsync(async (req: Request, res: Response, next
         totalProviders: providerCount,
         totalMeals: mealCount,
         totalOrders: orderCount,
-        totalRevenue: totalRevenue._sum.total || 0
+        totalRevenue: statsObj.total || 0,
+        totalSellerEarnings: statsObj.sellerEarnings || 0,
+        totalAdminCommission: statsObj.adminCommission || 0,
+        avgRating: reviewStats._avg.rating || 0
       },
-      recentOrders
+      recentOrders,
+      cancelledOrders,
+      reviews
     }
   });
 });

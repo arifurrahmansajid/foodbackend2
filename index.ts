@@ -28,10 +28,10 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    
-    const isAllowed = allowedOrigins.includes(origin) || 
-                     origin.endsWith('.vercel.app') || 
-                     origin.includes('localhost:');
+
+    const isAllowed = allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('localhost:');
 
     if (isAllowed) {
       callback(null, true);
@@ -51,7 +51,7 @@ app.use(express.json());
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.get('/', (req, res) => {
-  res.status(200).json({ 
+  res.status(200).json({
     message: 'Welcome to FoodHub Premium API 🍔',
     version: '1.0.0',
     status: 'Operational'
