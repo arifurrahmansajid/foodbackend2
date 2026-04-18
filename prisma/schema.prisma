@@ -95,10 +95,12 @@ model Order {
   userId      String
   user        User        @relation(fields: [userId], references: [id])
   status      OrderStatus @default(PLACED)
-  total       Float
-  address     String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  total           Float
+  sellerEarnings  Float       @default(0)
+  adminCommission Float       @default(0)
+  address         String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   // Relations
   items       OrderItem[]
