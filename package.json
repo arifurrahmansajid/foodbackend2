@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "build": "tsc",
+    "start": "node api.js && node dist/index.js",
+    "build": "node api.js && tsc",
     "postinstall": "prisma generate",
-    "dev": "nodemon index.ts",
+    "dev": "node api.js && nodemon index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "prisma": {
